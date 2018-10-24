@@ -1,0 +1,93 @@
+import com.atlassian.bamboo.specs.api.BambooSpec;
+import com.atlassian.bamboo.specs.api.builders.BambooKey;
+import com.atlassian.bamboo.specs.api.builders.BambooOid;
+import com.atlassian.bamboo.specs.api.builders.permission.PermissionType;
+import com.atlassian.bamboo.specs.api.builders.permission.Permissions;
+import com.atlassian.bamboo.specs.api.builders.permission.PlanPermissions;
+import com.atlassian.bamboo.specs.api.builders.plan.Job;
+import com.atlassian.bamboo.specs.api.builders.plan.Plan;
+import com.atlassian.bamboo.specs.api.builders.plan.PlanIdentifier;
+import com.atlassian.bamboo.specs.api.builders.plan.Stage;
+import com.atlassian.bamboo.specs.api.builders.plan.artifact.Artifact;
+import com.atlassian.bamboo.specs.api.builders.plan.branches.BranchCleanup;
+import com.atlassian.bamboo.specs.api.builders.plan.branches.PlanBranchManagement;
+import com.atlassian.bamboo.specs.api.builders.plan.configuration.AllOtherPluginsConfiguration;
+import com.atlassian.bamboo.specs.api.builders.plan.configuration.ConcurrentBuilds;
+import com.atlassian.bamboo.specs.api.builders.project.Project;
+import com.atlassian.bamboo.specs.builders.task.ScriptTask;
+import com.atlassian.bamboo.specs.model.task.ScriptTaskProperties;
+import com.atlassian.bamboo.specs.util.BambooServer;
+import com.atlassian.bamboo.specs.util.MapBuilder;
+
+@BambooSpec
+public class PlanSpec {
+    
+    public Plan plan() {
+        final Plan plan = new Plan(new Project()
+                .oid(new BambooOid("154wva1uzqz9d"))
+                .key(new BambooKey("TEST"))
+                .name("Test"),
+            "robocopy",
+            new BambooKey("ROB"))
+            .oid(new BambooOid("154n62ghrx7nn"))
+            .pluginConfigurations(new ConcurrentBuilds()
+                    .useSystemWideDefault(false))
+            .stages(new Stage("Default Stage")
+                    .jobs(new Job("Default Job",
+                            new BambooKey("JOB1"))
+                            .pluginConfigurations(new AllOtherPluginsConfiguration()
+                                    .configuration(new MapBuilder()
+                                            .put("custom", new MapBuilder()
+                                                .put("auto", new MapBuilder()
+                                                    .put("regex", "")
+                                                    .put("label", "")
+                                                    .build())
+                                                .put("buildHangingConfig.enabled", "false")
+                                                .put("ncover.path", "")
+                                                .put("clover", new MapBuilder()
+                                                    .put("path", "")
+                                                    .put("license", "")
+                                                    .put("useLocalLicenseKey", "true")
+                                                    .build())
+                                                .build())
+                                            .build()))
+                            .artifacts(new Artifact()
+                                    .name("Backup_Log_Artifact")
+                                    .copyPattern("*")
+                                    .location("Backup_Log_Artifact")
+                                    .shared(true))
+                            .tasks(new ScriptTask()
+                                    .description("backup ITTP and standalone (dtkyeniay ile test)")
+                                    .enabled(false)
+                                    .interpreter(ScriptTaskProperties.Interpreter.WINDOWS_POWER_SHELL)
+                                    .inlineBody("#robocopy \"\\\\DTL2XAPPS01\\c$\\Program Files\\CSRMEMO\\ITTP\\CRM\" \"\\\\DTL1TFSBUILD1\\C$\\Program Files\\_Sil\\dtl2xapps01_ITTP_Side_$((Get-Date).ToString('dd.MM.yyyy-HHmm'))\" /mt:128 /e /is /it /r:2 /w:2\n\n#robocopy \"\\\\DTL2XAPPS08\\c$\\Program Files\\CSRMEMO\" \"\\\\DTL1TFSBUILD1\\C$\\Program Files\\_Sil\\dtl2xapps08_DBS_ITTP_Side_$((Get-Date).ToString('dd.MM.yyyy-HHmm'))\" /mt:128 /e /is /it /r:1 /w:1\n\n#robocopy \"\\\\DTL2XAPPS09\\c$\\Program Files\\Digiturk\" \"\\\\DTL1TFSBUILD1\\C$\\Program Files\\_Sil\\DTL2XAPPS09_Tum_StandAlone_Uygulamalar_$((Get-Date).ToString('dd.MM.yyyy-HHmm'))\" /mt:128 /e /is /it /r:1 /w:1\n\n\nNew-Item -ItemType directory -Path \"${bamboo.build.working.directory}\\Backup_Log_Artifact\"\n\n\nWrite-Host ------------------------------------------------------\n\n robocopy \"\\\\DTL1TFSBUILD2\\e$\\Deployman-Input\\Citrix\\ITTP\\PROD-old\" \"\\\\DTL1TFSBUILD2\\d$\\backup\\_Sil\\dtl2xapps01_ITTP_Side_$((Get-Date).ToString('dd.MM.yyyy-HHmm'))\" /mt:128 /e /is /it /r:2 /w:5 /ns /log:\"${bamboo.build.working.directory}\\Backup_Log_Artifact\\DTL2XAPPS01_ITTP_Side.txt\" \n Get-Content \"${bamboo.build.working.directory}\\Backup_Log_Artifact\\DTL2XAPPS01_ITTP_Side.txt\" | Select-String -pattern \"%\" -notmatch | Out-File \"${bamboo.build.working.directory}\\Backup_Log_Artifact\\all_logs.log\" -Append -Encoding utf8\n Get-Content \"${bamboo.build.working.directory}\\Backup_Log_Artifact\\all_logs.log\"\n\nWrite-Host ------------------------------------------------------"),
+                                new ScriptTask()
+                                    .description("backup ITTP and standalone with powershell (dtadm ile test)")
+                                    .interpreter(ScriptTaskProperties.Interpreter.WINDOWS_POWER_SHELL)
+                                    .inlineBody("#robocopy \"\\\\DTL2XAPPS01\\c$\\Program Files\\CSRMEMO\\ITTP\\CRM\" \"\\\\DTL1TFSBUILD1\\C$\\Program Files\\_Sil\\dtl2xapps01_ITTP_Side_$((Get-Date).ToString('dd.MM.yyyy-HHmm'))\" /mt:128 /e /is /it /r:2 /w:2\n\n#robocopy \"\\\\DTL2XAPPS08\\c$\\Program Files\\CSRMEMO\" \"\\\\DTL1TFSBUILD1\\C$\\Program Files\\_Sil\\dtl2xapps08_DBS_ITTP_Side_$((Get-Date).ToString('dd.MM.yyyy-HHmm'))\" /mt:128 /e /is /it /r:1 /w:1\n\n#robocopy \"\\\\DTL2XAPPS09\\c$\\Program Files\\Digiturk\" \"\\\\DTL1TFSBUILD1\\C$\\Program Files\\_Sil\\DTL2XAPPS09_Tum_StandAlone_Uygulamalar_$((Get-Date).ToString('dd.MM.yyyy-HHmm'))\" /mt:128 /e /is /it /r:1 /w:1\n\n\nNew-Item -ItemType directory -Path \"${bamboo.build.working.directory}\\Backup_Log_Artifact\"\n\n\nWrite-Host ------------------------------------------------------\n\n robocopy \"\\\\DTL1TFSBUILD2\\e$\\Deployman-Input\\Citrix\\ITTP\\PROD-old\" \"\\\\DTL1TFSBUILD2\\d$\\backup\\_Sil\\dtl2xapps01_ITTP_Side_$((Get-Date).ToString('dd.MM.yyyy-HHmm'))\" /mt:128 /e /is /it /r:2 /w:5 /ns /log:\"${bamboo.build.working.directory}\\Backup_Log_Artifact\\DTL2XAPPS01_ITTP_Side.txt\" \n Get-Content \"${bamboo.build.working.directory}\\Backup_Log_Artifact\\DTL2XAPPS01_ITTP_Side.txt\" | Select-String -pattern \"%\" -notmatch | Out-File \"${bamboo.build.working.directory}\\Backup_Log_Artifact\\all_logs.log\" -Append -Encoding utf8\n Get-Content \"${bamboo.build.working.directory}\\Backup_Log_Artifact\\all_logs.log\"\n\nWrite-Host ------------------------------------------------------"))
+                            .cleanWorkingDirectory(true)))
+            .planBranchManagement(new PlanBranchManagement()
+                    .delete(new BranchCleanup())
+                    .notificationForCommitters());
+        return plan;
+    }
+    
+    public PlanPermissions planPermission() {
+        final PlanPermissions planPermission = new PlanPermissions(new PlanIdentifier("TEST", "ROB"))
+            .permissions(new Permissions()
+                    .userPermissions("admin", PermissionType.EDIT, PermissionType.VIEW, PermissionType.ADMIN, PermissionType.CLONE, PermissionType.BUILD));
+        return planPermission;
+    }
+    
+    public static void main(String... argv) {
+        //By default credentials are read from the '.credentials' file.
+        BambooServer bambooServer = new BambooServer("http://10.0.75.1:8085");
+        final PlanSpec planSpec = new PlanSpec();
+        
+        final Plan plan = planSpec.plan();
+        bambooServer.publish(plan);
+        
+        final PlanPermissions planPermission = planSpec.planPermission();
+        bambooServer.publish(planPermission);
+    }
+}
